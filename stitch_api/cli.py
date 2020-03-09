@@ -158,6 +158,6 @@ def stop_replication(source, stitch_api=None):
     _ = stitch_api.stop_repliction(source)
 
 
-cli = click.CommandCollection(sources=[cli1])
+main = click.CommandCollection(sources=[cli1])
 if __name__ == '__main__':
-    cli()
+    main()

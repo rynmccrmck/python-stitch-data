@@ -5,8 +5,8 @@ import logging
 from collections import defaultdict
 from requests_toolbelt import sessions
 from urllib import parse as url_parse
-from constants import API_URL, DEVICE_SETTINGS
-from api import ConnectionCheck, ReplicationJob, Source, Stream
+from stitch_api import constants
+from stitch_api import api
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -69,13 +69,13 @@ class StitchAPI:
         self.stitch_auth_user = stitch_auth_user
         self.stitch_auth_password = stitch_auth_password
 
-        self.client = sessions.BaseUrlSession(base_url=API_URL)
+        self.client = sessions.BaseUrlSession(base_url=constants.API_URL)
         self.client.hooks["response"] = [assert_status_hook]
 
         self.headers = {
                         'Accept': 'application/json',
                         'Origin': 'https://app.stitchdata.com',
-                        'User-Agent': DEVICE_SETTINGS['user_agent'],
+                        'User-Agent': constants.DEVICE_SETTINGS['user_agent'],
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer %s' % stitch_api_key
         }
@@ -98,7 +98,7 @@ class StitchAPI:
             else:
                 source_entries.append(source_id)
         if stream_entries or source_entries:
-            self.write_blacklist =  WriteBlacklist(source_entries, stream_entries)
+            self.write_blacklist = WriteBlacklist(source_entries, stream_entries)
 
     def _login(self, stitch_auth_user: str, stitch_auth_password: str) -> bool:
         # TODO use Session
@@ -124,7 +124,7 @@ class StitchAPI:
 
     @read_only
     def list_sources(self, include_deleted=False, *args, **kwargs) -> List[Dict[str, Any]]:
-        sources = self._execute_request(Source.list, return_json=True, *args, **kwargs)
+        sources = self._execute_request(api.Source.list, return_json=True, *args, **kwargs)
         if not include_deleted:
             sources = list(filter(lambda x: not x['deleted_at'],
                                   sources))
@@ -140,7 +140,8 @@ class StitchAPI:
 
     @read_only
     def _list_streams(self, source_id, *args, **kwargs) -> List[Dict[str, Any]]:
-        return self._execute_request(Stream.list, source_id=source_id, return_json=True, *args, **kwargs)
+        return self._execute_request(api.Stream.list, source_id=source_id, return_json=True,
+                                     *args, **kwargs)
 
     @read_only
     def list_streams(self, source_name: str, selected_only: bool = False, *args, **kwargs):
@@ -172,13 +173,13 @@ class StitchAPI:
         # TODO optional id
         stream = self.get_stream_from_name(source_name, stream_name)
         stream_id = stream['stream_id']
-        response = self._execute_request(Stream.get_schema, source_id=source_id,
+        response = self._execute_request(api.Stream.get_schema, source_id=source_id,
                                          stream_id=stream_id, return_json=True, *args, **kwargs)
         return response
 
     @internal_login_required
     def _reset_stream(self, source_id: int, stream_id: int, *args, **kwargs) -> Any:
-        response = self._execute_request(Stream.reset, source_id=source_id, stream_id=stream_id,
+        response = self._execute_request(api.Stream.reset, source_id=source_id, stream_id=stream_id,
                                          client_id=self.stitch_client_id, *args, **kwargs)
         return response
 
@@ -193,7 +194,7 @@ class StitchAPI:
 
     @internal_login_required
     def _reset_integration(self, source_id: int, *args, **kwargs) -> Any:
-        response = self._execute_request(Source.reset, source_id=source_id,
+        response = self._execute_request(api.Source.reset, source_id=source_id,
                                          client_id=self.stitch_client_id, *args, **kwargs)
         return response
 
@@ -226,18 +227,18 @@ class StitchAPI:
         else:
             raise Exception('must be cron or minute interval')
         source = self.get_source_from_name(source_name)
-        response = self._execute_request(Source.update, source_id=source['id'],
+        response = self._execute_request(api.Source.update, source_id=source['id'],
                                          payload=data, *args, **kwargs)
         return response
 
     def pause_source(self, source_name: str, *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
-        response = self._execute_request(Source.pause, source_id=source['id'], *args, **kwargs)
+        response = self._execute_request(api.Source.pause, source_id=source['id'], *args, **kwargs)
         return response
 
     def unpause_source(self, source_name: str, *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
-        response = self._execute_request(Source.unpause, source_id=source['id'], *args, **kwargs)
+        response = self._execute_request(api.Source.unpause, source_id=source['id'], *args, **kwargs)
         return response
 
     @read_only
@@ -250,7 +251,7 @@ class StitchAPI:
         source = self.get_source_from_name(source_name)
         source_id = source['id']
 
-        response = self._execute_request(Stream.get_load_data, source_id=source_id,
+        response = self._execute_request(api.Stream.get_load_data, source_id=source_id,
                                          stream_name=stream_name,
                                          time_range_start=time_start,
                                          time_range_end=time_end,
@@ -261,13 +262,13 @@ class StitchAPI:
     @read_only
     def source_connection_check(self, source_name: str, *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
-        self._execute_request(ConnectionCheck.get, source_id=source['id'], return_json=True,
+        self._execute_request(api.ConnectionCheck.get, source_id=source['id'], return_json=True,
                               *args, **kwargs)
 
     def start_repliction(self, source_name: str, *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
-        self._execute_request(ReplicationJob.start, source_id=source['id'], *args, **kwargs)
+        self._execute_request(api.ReplicationJob.start, source_id=source['id'], *args, **kwargs)
 
     def stop_replication(self, source_name: str, *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
-        self._execute_request(ReplicationJob.stop, source_id=source['id'], *args, **kwargs)
+        self._execute_request(api.ReplicationJob.stop, source_id=source['id'], *args, **kwargs)
