@@ -1,0 +1,28 @@
+# Environments
+*.pem
+.env
+.env.docker
+.envrc.*
+.direnv
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyPI
+dist
+build
+*.egg-info
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
+venv/
