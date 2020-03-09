@@ -9,6 +9,7 @@ STITCH_API_KEY = os.getenv('STITCH_API_KEY')
 STITCH_CLIENT_ID = os.getenv('STITCH_CLIENT_ID')
 STITCH_AUTH_USER = os.getenv('STITCH_AUTH_USER')
 STITCH_AUTH_PASSWORD = os.getenv('STITCH_AUTH_PASSWORD')
+STITCH_BLACKILST_SOURCES = os.getenv('STITCH_BLACKILST_SOURCES')
 
 
 def provide_client(func):
@@ -17,8 +18,10 @@ def provide_client(func):
         stitch_api = StitchAPI(STITCH_API_KEY,
                                STITCH_CLIENT_ID,
                                STITCH_AUTH_USER,
-                               STITCH_AUTH_PASSWORD)
-        value = func(*args, **kwargs, stitch_api=stitch_api)
+                               STITCH_AUTH_PASSWORD,
+                               STITCH_BLACKILST_SOURCES)
+        kwargs.update(stitch_api=stitch_api)
+        value = func(*args, **kwargs)
         return value
     return wrapper_client_provider
 
@@ -40,11 +43,19 @@ def list_sources(include_deleted, stitch_api=None):
 @cli1.command()
 @click.option('--source', help='Source name')
 @click.option('--selected_only', default=False, help='Return only selected streams')
+@click.option('--fields', default=None, help='Comma separated list')
 @provide_client
-def list_streams(source, selected_only, stitch_api=None):
+def list_streams(source, selected_only, fields=None, stitch_api=None):
     """List streams in a source"""
     streams = stitch_api.list_streams(source, selected_only)
-    print(streams)
+    if fields:
+        for stream in streams:
+            output = {'stream_id': stream['stream_id'], 'stream_name': stream['stream_name']}
+            for f in fields.split(','):
+                output[f] = stream[f]
+            print(output)
+    else:
+        print(streams)
 
 
 @cli1.command()
@@ -58,7 +69,7 @@ def get_source(source, stitch_api=None):
 
 @cli1.command()
 @click.option('--source', help='Source name')
-@click.option('--source', help='Stream name')
+@click.option('--stream', help='Stream name')
 @provide_client
 def get_stream(source, stream, stitch_api=None):
     """Get stream info"""
@@ -68,7 +79,7 @@ def get_stream(source, stream, stitch_api=None):
 
 @cli1.command()
 @click.option('--source', help='Source name')
-@click.option('--source', help='Stream name')
+@click.option('--stream', help='Stream name')
 @provide_client
 def get_stream_schema(source, stream, stitch_api=None):
     """Get stream schema"""
@@ -78,12 +89,12 @@ def get_stream_schema(source, stream, stitch_api=None):
 
 @cli1.command()
 @click.option('--source', help='Source name')
-@click.option('--source', help='Stream name')
+@click.option('--stream', help='Stream name')
 @provide_client
 def reset_stream(source, stream, stitch_api=None):
     """Reset a stream"""
     response = stitch_api.reset_stream(source, stream)
-    print(response.json())
+    print(response)
 
 
 @cli1.command()
@@ -92,7 +103,7 @@ def reset_stream(source, stream, stitch_api=None):
 def reset_source(source, stitch_api=None):
     """Reset a source"""
     response = stitch_api.reset_integration(source)
-    print(response.json())
+    print(response)
 
 
 @cli1.command()
@@ -101,7 +112,7 @@ def reset_source(source, stitch_api=None):
 def get_schedule(source, stitch_api=None):
     """Get source replication schedule"""
     response = stitch_api.get_replication_schedule(source)
-    print(response.json())
+    print(response)
 
 
 @cli1.command()
@@ -110,7 +121,7 @@ def get_schedule(source, stitch_api=None):
 def pause_source(source, stitch_api=None):
     """Pause a source"""
     response = stitch_api.pause_source(source)
-    print(response.json())
+    print(response)
 
 
 @cli1.command()
@@ -119,7 +130,7 @@ def pause_source(source, stitch_api=None):
 def unpause_source(source, stitch_api=None):
     """Unpause a source"""
     response = stitch_api.unpause_source(source)
-    print(response.json())
+    print(response)
 
 
 @cli1.command()
@@ -128,7 +139,7 @@ def unpause_source(source, stitch_api=None):
 def connection_check(source, stitch_api=None):
     """Get last source connection check"""
     response = stitch_api.source_connection_check(source)
-    print(response.json())
+    print(response)
 
 
 @cli1.command()

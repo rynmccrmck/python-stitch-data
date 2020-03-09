@@ -56,7 +56,7 @@ class Source(BaseStitchApi):
         return cls.update(source_id, payload=payload)
 
     @classmethod
-    def list(cls) -> namedtuple:
+    def list(cls, *args, **kwargs) -> namedtuple:
         return cls.send_request('/v4/sources', method='get')
 
     @classmethod
@@ -87,7 +87,7 @@ class Stream(BaseStitchApi):
     @classmethod
     def get_schema(cls, source_id: int, stream_id: int, *args, **kwargs) -> namedtuple:
         assert all([source_id, stream_id])
-        return cls.send_request('/v4/sources/{0}/streams/{2}'.format(source_id, stream_id),
+        return cls.send_request('/v4/sources/{0}/streams/{1}'.format(source_id, stream_id),
                                 method='get')
 
     @classmethod
