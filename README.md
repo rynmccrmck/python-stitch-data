@@ -18,10 +18,10 @@ cp  .env.example .env
 - Fill in secrets (or use environment variables)
 
 ### STITCH_API_KEY
-stith app > account settings.  Used for public API calls
+stitch app > account settings.  Used for public API calls
 
 ### STITCH_CLIENT_ID
-stith app > account settings.  Used for public API calls
+stitch app > account settings.  Used for public API calls
 
 ### STITCH_AUTH_USER
 Used for internal api calls
