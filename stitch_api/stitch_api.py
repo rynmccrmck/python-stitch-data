@@ -273,7 +273,9 @@ class StitchAPI:
         source = self.get_source_from_name(source_name)
         self._execute_request(api.ReplicationJob.stop, source_id=source['id'], *args, **kwargs)
 
+    @internal_login_required
     def get_source_daily_report(self, source_name: str, *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
-        daily_stats = self._execute_request(api.Source.daily_report, return_json=True, *args, **kwargs)
+        daily_stats = self._execute_request(api.Source.daily_report, client_id=self.stitch_client_id,
+                                            return_json=True, *args, **kwargs)
         return [i for i in daily_stats['stats'] if i['connection_id'] == source['id']]
