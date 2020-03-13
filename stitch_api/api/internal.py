@@ -14,6 +14,11 @@ class Source(BaseStitchApi):
                                            source_id=source_id)
         return cls.send_request(url, method='delete')
 
+    @classmethod
+    def daily_report(cls, source, client_id=None) -> namedtuple:
+        url = '/clients/{client_id}/stats/daily'.format(client_id=client_id)
+        return cls.send_request(url, method='get')
+
 
 class Stream(BaseStitchApi):
 
