@@ -9,7 +9,7 @@ STITCH_API_KEY = os.getenv('STITCH_API_KEY')
 STITCH_CLIENT_ID = os.getenv('STITCH_CLIENT_ID')
 STITCH_AUTH_USER = os.getenv('STITCH_AUTH_USER')
 STITCH_AUTH_PASSWORD = os.getenv('STITCH_AUTH_PASSWORD')
-STITCH_BLACKILST_SOURCES = os.getenv('STITCH_BLACKILST_SOURCES')
+STITCH_BLACKLIST_SOURCES = os.getenv('STITCH_BLACKLIST_SOURCES')
 
 
 def provide_client(func):
@@ -19,7 +19,7 @@ def provide_client(func):
                                STITCH_CLIENT_ID,
                                STITCH_AUTH_USER,
                                STITCH_AUTH_PASSWORD,
-                               STITCH_BLACKILST_SOURCES)
+                               STITCH_BLACKLIST_SOURCES)
         kwargs.update(stitch_api=stitch_api)
         value = func(*args, **kwargs)
         return value
