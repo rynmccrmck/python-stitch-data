@@ -220,12 +220,13 @@ class StitchAPI:
                     not(cron_expression and frequency_in_minutes)]))
 
         if cron_expression:
-            data = '{{"properties":{{"cron_expression":"{}"}}}}'.format(cron_expression)
+            data = {"properties": {"cron_expression": cron_expression}}
         elif frequency_in_minutes:
-            data = ('{{"properties":{{"frequency_in_minutes":"{}",'
-                    '"cron_expression":null}}}}').format(frequency_in_minutes)
+            data = {"properties": {"frequency_in_minutes": str(frequency_in_minutes),
+                    "cron_expression": None}}
         else:
             raise Exception('must be cron or minute interval')
+
         source = self.get_source_from_name(source_name)
         response = self._execute_request(api.Source.update, source_id=source['id'],
                                          payload=data, *args, **kwargs)
