@@ -83,9 +83,10 @@ class StitchAPI:
         self.write_blacklist = None
         self._parse_blacklist_config(stitch_blacklist_sources)
 
-    def _parse_blacklist_config(self, config_string: str) -> None:
+    def _parse_blacklist_config(self, config_string: str) -> bool:
         if not config_string:
             self.write_blacklist = None
+            return False
         entries = config_string.split(',')
         stream_entries = defaultdict(list)
         source_entries = []
@@ -99,6 +100,7 @@ class StitchAPI:
                 source_entries.append(source_id)
         if stream_entries or source_entries:
             self.write_blacklist = WriteBlacklist(source_entries, stream_entries)
+        return True
 
     def _login(self, stitch_auth_user: str, stitch_auth_password: str) -> bool:
         # TODO use Session
