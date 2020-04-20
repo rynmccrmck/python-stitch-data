@@ -41,7 +41,7 @@ stitch = stitch_api.StitchAPI(STITCH_API_KEY,
                               STITCH_CLIENT_ID,
                               STITCH_AUTH_USER,
                               STITCH_AUTH_PASSWORD,
-                              STITCH_BLACKILST_SOURCES)
+                              STITCH_BLACKLIST_SOURCES)
 
 sources = stitch.list_sources()
 ```
