@@ -1,13 +1,13 @@
 from typing import Any, Callable, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import logging
 from collections import defaultdict
 from requests_toolbelt import sessions
-from urllib import parse as url_parse
 from stitch_api import constants
 from stitch_api import api
 from dotenv import load_dotenv
+from .constants import MAX_REPORT_DAYS
 
 load_dotenv()
 
@@ -168,6 +168,13 @@ class StitchAPI:
         return matching_streams[0]
 
     @read_only
+    def get_stream_schema(self, source_id: str, stream_id: str,
+                          *args, **kwargs) -> Any:
+        response = self._execute_request(api.Stream.get_schema, source_id=source_id,
+                                         stream_id=stream_id, return_json=True, *args, **kwargs)
+        return response
+
+    @read_only
     def get_stream_schema_from_name(self, source_name: str, stream_name: str,
                                     *args, **kwargs) -> Any:
         source = self.get_source_from_name(source_name)
@@ -244,21 +251,60 @@ class StitchAPI:
         response = self._execute_request(api.Source.unpause, source_id=source['id'], *args, **kwargs)
         return response
 
+    @classmethod
+    def adjust_date(cls, datetime: datetime):
+        earliest_date = datetime.now() - timedelta(days=MAX_REPORT_DAYS)
+        if datetime < earliest_date:
+            logger.info("Stitch history is finite, changing start_date to {}".format(earliest_date))
+            return earliest_date
+        return datetime
+
+    def get_stream_load_reports(self, source_id: int, stream_name: str,
+                                start_datetime: datetime, end_datetime: datetime):
+        # stitch has limited history
+        start_datetime = self.adjust_date(start_datetime)
+        end_datetime = self.adjust_date(end_datetime)
+        delta = end_datetime - start_datetime
+        date_list = [end_datetime - timedelta(days=x) for x in range(delta.days)]
+        reports = []
+        for end, start in zip(date_list, date_list[1:]):
+            report = self.get_loads('', stream_name=stream_name, limit=100, offset=0,
+                                    time_range_start=start, time_range_end=end,
+                                    source_id=source_id)
+            reports.extend(report['batches'])
+        return reports
+
+    def get_source_load_reports(self, source_id: int,
+                                start_datetime: datetime, end_datetime: datetime):
+        reports = []
+        streams = self._list_streams(source_id=source_id)
+        for stream in streams:
+            report = self.get_stream_load_reports(source_id=source_id,
+                                                  stream_name=stream['stream_name'],
+                                                  start_datetime=start_datetime,
+                                                  end_datetime=end_datetime)
+            reports.extend(report)
+        return reports
+
     @read_only
     @internal_login_required
     def get_loads(self, source_name: str, stream_name: str, limit: int, offset: int,
-                  time_range_start: datetime, time_range_end: datetime, *args, **kwargs) -> Any:
+                  time_range_start: datetime, time_range_end: datetime, source_id: int = None,
+                  *args, **kwargs) -> Any:
+
+        if not source_id:
+            source = self.get_source_from_name(source_name)
+            source_id = source['id']
+
         # TODO clean up and assert time ranges
-        time_start = url_parse.quote(time_range_start.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
-        time_end = url_parse.quote(time_range_end.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
-        source = self.get_source_from_name(source_name)
-        source_id = source['id']
+        time_start = time_range_start.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+        time_end = time_range_end.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
         response = self._execute_request(api.Stream.get_load_data, source_id=source_id,
                                          stream_name=stream_name,
-                                         time_range_start=time_start,
-                                         time_range_end=time_end,
-                                         limit=limit, offset=0, client_id=self.stitch_client_id,
+                                         start_iso=time_start,
+                                         end_iso=time_end,
+                                         limit=limit, offset=offset, client_id=self.stitch_client_id,
                                          return_json=True, *args, **kwargs)
         return response
 
