@@ -5,7 +5,7 @@ Python wrapper for Stitch Data API
 ## Installation
 
 ```
-pip install python-stitch-data==0.1.2
+pip install python-stitch-data==0.1.3
 ```
 
 ## Getting started
