@@ -265,7 +265,7 @@ class StitchAPI:
         start_datetime = self.adjust_date(start_datetime)
         end_datetime = self.adjust_date(end_datetime)
         delta = end_datetime - start_datetime
-        date_list = [end_datetime - timedelta(days=x) for x in range(delta.days)]
+        date_list = [end_datetime - timedelta(days=x) for x in range(delta.days + 1)]
         reports = []
         for end, start in zip(date_list, date_list[1:]):
             report = self.get_loads('', stream_name=stream_name, limit=100, offset=0,
@@ -274,11 +274,15 @@ class StitchAPI:
             reports.extend(report['batches'])
         return reports
 
+    # TODO add selected filter
     def get_source_load_reports(self, source_id: int,
-                                start_datetime: datetime, end_datetime: datetime):
+                                start_datetime: datetime, end_datetime: datetime,
+                                enabled_only: bool = False):
         reports = []
         streams = self._list_streams(source_id=source_id)
         for stream in streams:
+            if enabled_only and stream['paused']:
+                continue
             report = self.get_stream_load_reports(source_id=source_id,
                                                   stream_name=stream['stream_name'],
                                                   start_datetime=start_datetime,
@@ -305,6 +309,28 @@ class StitchAPI:
                                          start_iso=time_start,
                                          end_iso=time_end,
                                          limit=limit, offset=offset, client_id=self.stitch_client_id,
+                                         return_json=True, *args, **kwargs)
+        return response
+
+    @read_only
+    @internal_login_required
+    def get_extractions(self, time_range_start: datetime, time_range_end: datetime,
+                        source_id: Optional[int] = None, source_name: Optional[str] = None,
+                        *args, **kwargs) -> Any:
+
+        if not source_id:
+            source = self.get_source_from_name(source_name)
+            source_id = source['id']
+
+        # TODO clean up and assert time ranges
+        time_start = time_range_start.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+        time_end = time_range_end.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+
+        response = self._execute_request(api.Source.get_extraction_data,
+                                         source_id=source_id,
+                                         start_iso=time_start,
+                                         end_iso=time_end,
+                                         client_id=self.stitch_client_id,
                                          return_json=True, *args, **kwargs)
         return response
 
