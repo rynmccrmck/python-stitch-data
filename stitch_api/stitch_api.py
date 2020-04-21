@@ -252,12 +252,12 @@ class StitchAPI:
         return response
 
     @classmethod
-    def adjust_date(cls, datetime: datetime):
+    def adjust_date(cls, raw_datetime: datetime):
         earliest_date = datetime.now() - timedelta(days=MAX_REPORT_DAYS)
-        if datetime < earliest_date:
+        if raw_datetime < earliest_date:
             logger.info("Stitch history is finite, changing start_date to {}".format(earliest_date))
             return earliest_date
-        return datetime
+        return raw_datetime
 
     def get_stream_load_reports(self, source_id: int, stream_name: str,
                                 start_datetime: datetime, end_datetime: datetime):
