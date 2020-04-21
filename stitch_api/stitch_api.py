@@ -277,11 +277,11 @@ class StitchAPI:
     # TODO add selected filter
     def get_source_load_reports(self, source_id: int,
                                 start_datetime: datetime, end_datetime: datetime,
-                                enabled_only: bool = False):
+                                selected_only: bool = False):
         reports = []
         streams = self._list_streams(source_id=source_id)
         for stream in streams:
-            if enabled_only and stream['paused']:
+            if selected_only and not stream['selected']:
                 continue
             report = self.get_stream_load_reports(source_id=source_id,
                                                   stream_name=stream['stream_name'],
