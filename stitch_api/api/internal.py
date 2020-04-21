@@ -8,7 +8,7 @@ from .common import BaseStitchApi
 class Source(BaseStitchApi):
 
     @classmethod
-    def reset(cls, source_id, client_id=None, *args, **kwargs) -> namedtuple:
+    def reset(cls, source_id, client_id: Optional[int] = None, *args, **kwargs) -> namedtuple:
         url = ('/menagerie/public/v1/clients/{client_id}/connections/'
                '{source_id}/state').format(client_id=client_id,
                                            source_id=source_id)
@@ -17,6 +17,17 @@ class Source(BaseStitchApi):
     @classmethod
     def daily_report(cls, client_id=None, *args, **kwargs) -> namedtuple:
         url = '/clients/{client_id}/stats/daily'.format(client_id=client_id)
+        return cls.send_request(url, method='get')
+
+    @classmethod
+    def get_extraction_data(cls, source_id: int, start_iso: str, end_iso: str,
+                            client_id: Optional[int] = None, *args, **kwargs) -> namedtuple:
+        url = ('/menagerie/public/v2/clients/{client_id}/connections/{source_id}/jobs?'
+               'time-range-start={start_iso}&time-range-end={end_iso}&mode=sync').format(
+                   client_id=client_id,
+                   source_id=source_id,
+                   start_iso=start_iso,
+                   end_iso=end_iso)
         return cls.send_request(url, method='get')
 
 
