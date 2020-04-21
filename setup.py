@@ -7,12 +7,12 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='python-stitch-data',
-    version='0.1.5',
+    version='0.1.6',
     description='Python wrapper for Stitch Data API',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/rynmccrmck/python-stitch-data',
-    download_url='https://github.com/rynmccrmck/python-stitch-data/archive/v0.1.5.tar.gz',
+    download_url='https://github.com/rynmccrmck/python-stitch-data/archive/v0.1.6.tar.gz',
     keywords=['stitch', 'api', 'wrapper'],
     packages=find_packages(),
     install_requires=[
