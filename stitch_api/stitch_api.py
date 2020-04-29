@@ -259,8 +259,8 @@ class StitchAPI:
             return earliest_date
         return raw_datetime
 
-    def get_multi_day_reports(self, source_id: int, stream_name: str,
-                              start_datetime: datetime, end_datetime: datetime):
+    def get_multiday_load_reports(self, source_id: int, stream_name: str,
+                                  start_datetime: datetime, end_datetime: datetime):
         """
         Chunks load reports into days
         """
@@ -287,8 +287,8 @@ class StitchAPI:
 
         # required as stitch internal API limits request range
         if delta.days > 0:
-            reports = self.get_multi_day_reports(source_id, stream_name, start_datetime,
-                                                 end_datetime)
+            reports = self.get_multiday_load_reports(source_id, stream_name, start_datetime,
+                                                     end_datetime)
         else:
             reports = self.get_loads('', stream_name=stream_name, limit=100, offset=0,
                                      time_range_start=start_datetime, time_range_end=end_datetime,
