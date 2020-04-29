@@ -259,22 +259,42 @@ class StitchAPI:
             return earliest_date
         return raw_datetime
 
-    def get_stream_load_reports(self, source_id: int, stream_name: str,
-                                start_datetime: datetime, end_datetime: datetime):
-        # stitch has limited history
-        start_datetime = self.adjust_date(start_datetime)
-        end_datetime = self.adjust_date(end_datetime)
+    def get_multi_day_reports(self, source_id: int, stream_name: str,
+                              start_datetime: datetime, end_datetime: datetime):
+        """
+        Chunks load reports into days
+        """
         delta = end_datetime - start_datetime
-        date_list = [end_datetime - timedelta(days=x) for x in range(delta.days + 1)]
+        date_list = [start_datetime + timedelta(days=x) for x in range(delta.days + 1)]
+        if end_datetime > date_list[-1]:
+            date_list.append(end_datetime)
+        else:
+            date_list[-1] = end_datetime
         reports = []
-        for end, start in zip(date_list, date_list[1:]):
+        for start, end in zip(date_list, date_list[1:]):
             report = self.get_loads('', stream_name=stream_name, limit=100, offset=0,
                                     time_range_start=start, time_range_end=end,
                                     source_id=source_id)
             reports.extend(report['batches'])
         return reports
 
-    # TODO add selected filter
+    def get_stream_load_reports(self, source_id: int, stream_name: str,
+                                start_datetime: datetime, end_datetime: datetime):
+        # stitch has limited history
+        start_datetime = self.adjust_date(start_datetime)
+        end_datetime = self.adjust_date(end_datetime)
+        delta = end_datetime - start_datetime
+
+        # required as stitch internal API limits request range
+        if delta.days > 0:
+            reports = self.get_multi_day_reports(source_id, stream_name, start_datetime,
+                                                 end_datetime)
+        else:
+            reports = self.get_loads('', stream_name=stream_name, limit=100, offset=0,
+                                     time_range_start=start_datetime, time_range_end=end_datetime,
+                                     source_id=source_id)['batches']
+        return reports
+
     def get_source_load_reports(self, source_id: int,
                                 start_datetime: datetime, end_datetime: datetime,
                                 selected_only: bool = False):
